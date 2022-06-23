@@ -13,6 +13,7 @@ TODO:
 * Access to the camera files over ssh(scp)
 * Motor control
 * Audio translation
+* Motion detection. Only some simple function, as it is difficult to implement all futures supported by the camera hardware even having Ambarella SDK.
 
 ## Recommended firmware
 
