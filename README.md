@@ -5,7 +5,7 @@ This is an indirect fork of [niclet/xiaomi_hack](https://github.com/niclet/xiaom
 * Enable/disable cloud (Mi Home)
 * SSH support
 * FTP support
-* RTSP support
+* RTSP support and mjpeg video translation over http
 * Night vision (on/off/auto)
 * Custom TZ and NTP server
 
