@@ -8,7 +8,7 @@ export XIAOMI_HACK_DEVICE_NAME=mijia360
 # We restart it with useless param and redirect output to log file on sdcard
 
 if [ $# -eq 0 ]; then
-   export XIAOMI_HACK_HOME=/sdcard/xiaomi_hack
+   export XIAOMI_HACK_HOME=/sdcard
    export XIAOMI_HACK_DEVICE_HOME=${XIAOMI_HACK_HOME}/${XIAOMI_HACK_DEVICE_NAME}
    export XIAOMI_HACK_LOGS=${XIAOMI_HACK_HOME}/logs
    export XIAOMI_HACK_TMP=/tmp/xiaomi_hack
