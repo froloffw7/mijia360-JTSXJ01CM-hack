@@ -1,3 +1,6 @@
+#
+# Will run before /usr/imi/miio.sh
+#
 # Activate native hack traces
 if [ "${MCH_NATIVE_TRACES}" = true ]; then
     export XIAOMI_HACK_NATIVE_TRACES=YES
