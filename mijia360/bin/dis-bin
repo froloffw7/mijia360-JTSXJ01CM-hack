@@ -1,2 +1,2 @@
 #!/bin/sh
-echo "\$0 disabled with xiaomi-hack"
+echo "$0 disabled with xiaomi-hack"
