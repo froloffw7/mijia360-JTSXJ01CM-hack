@@ -10,6 +10,7 @@ This is an indirect fork of [niclet/xiaomi_hack](https://github.com/niclet/xiaom
 * Custom TZ and NTP server
 
 TODO:
+* Access to the camera files over ssh(scp)
 * Motor control
 * Audio translation
 
