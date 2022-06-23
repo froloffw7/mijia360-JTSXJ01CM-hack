@@ -1,46 +1,40 @@
 #!/bin/sh
 
+export XIAOMI_HACK_DEVICE_NAME=mijia360
+
+##### XIAOMI COMMON HACK ##### 
+
 # When script is started without any arguments, we assume it is the official startup
 # We restart it with useless param and redirect output to log file on sdcard
 
 if [ $# -eq 0 ]; then
-    export MCH_DEVICE_NAME=mijia360-1g
-    export MCH_SD=/sdcard
-    export MCH_HOME=${MCH_SD}/${MCH_DEVICE_NAME}
-    export MCH_LOGS=${MCH_SD}/log
-    export MCH_TMP=/tmp/mch
-    mkdir -p "${MCH_LOGS}"
-    rm -R "${MCH_TMP}" 
-    mkdir -p "${MCH_TMP}"
-    $0 nop > "${MCH_LOGS}/${MCH_DEVICE_NAME}.log" 2>&1
-    exit $?
+   export XIAOMI_HACK_HOME=/sdcard/xiaomi_hack
+   export XIAOMI_HACK_DEVICE_HOME=${XIAOMI_HACK_HOME}/${XIAOMI_HACK_DEVICE_NAME}
+   export XIAOMI_HACK_LOGS=${XIAOMI_HACK_HOME}/logs
+   export XIAOMI_HACK_TMP=/tmp/xiaomi_hack
+   mkdir -p "${XIAOMI_HACK_LOGS}"
+   mkdir -p "${XIAOMI_HACK_TMP}"
+   $0 nop > "${XIAOMI_HACK_LOGS}/${XIAOMI_HACK_DEVICE_NAME}.log" 2>&1
+   exit $?
 fi
 
-echo "### Mijia 360 Camera (1st-gen) Hack"
-echo
-
-# Export all available variables from ${MCH_SD}/config.ini
-if [ -f ${MCH_SD}/config.ini ]; then
-    echo "----- Export variables from ${MCH_SD}/config.ini"
-    while read env_var; do
-        if [ "${env_var:0:4}" = "MCH_" ]; then
-            if [ "${env_var:0:9}" != "MCH_WIFI_" -a "${env_var:0:9}" != "MCH_ROOT_" ]; then
-                echo -e "export ${env_var}"
-            fi
-            export "${env_var}"
-        fi
-    done < ${MCH_SD}/config.ini
-    echo
-    # Create MCH_ environment file
-    export | grep MCH_ > "${MCH_TMP}/env.sh"
-
-    echo "if [ \$# -eq 0 ]; then
-        \$0 nop >> \"\${MCH_LOGS}/\${MCH_DEVICE_NAME}.log\" 2>&1
-        exit \$?
-    fi" >> "${MCH_TMP}/env.sh"
+# Export all available variables from ${XIAOMI_HACK_HOME}/config.cfg
+if [ -f ${XIAOMI_HACK_HOME}/config.cfg ]; then
+   echo "### Export variables from ${XIAOMI_HACK_HOME}/config.cfg ..."
+   while read env_var; do
+      if [ "${env_var:0:12}" = "XIAOMI_HACK_" ]; then
+         echo -e "export \"${env_var}\""
+         export "${env_var}"
+      fi
+   done < ${XIAOMI_HACK_HOME}/config.cfg
+   echo
+   # Create XIAOMI_HACK environment file
+   export | grep XIAOMI_HACK_ > "${XIAOMI_HACK_TMP}/xiaomi_hack_env.sh"
 else
-    echo "Error: ${MCH_SD}/config.ini not found"
+   echo "Error: ${XIAOMI_HACK_HOME}/config.cfg is not available"
 fi
+
+##### MIJIA360 CUSTOM HACK #####
 
 # In first versions of this hack, default root password was unknown.
 # That's why we changed it to be able to connect using telnet.
@@ -51,82 +45,90 @@ fi
 # For future firmware, previous hack shouldn't be used anymore
 
 FIRMWARE_VERSION=$(cat /etc/os-release)
-MCH_SHADOW_BACKUP=${MCH_HOME}/etc/shadow.backup
-if [ "${FIRMWARE_VERSION}" = "CHUANGMI_VERSION=3.3.2_2016071217" -o "${FIRMWARE_VERSION}" = "CHUANGMI_VERSION=3.3.2_2016081814" ]; then
-    echo "----- Revert to known password (for first two firmwares)"
-    if [ -f "${MCH_SHADOW_BACKUP}" ]; then
-        diff /etc/shadow "${MCH_SHADOW_BACKUP}" > /dev/null
-        if [ $? -eq 1 ]; then
-            cp "${MCH_SHADOW_BACKUP}" /etc/shadow
-        fi
-    else
-        echo "Error: ${MCH_SHADOW_BACKUP} not found"
-    fi
+XIAOMI_HACK_MIJIA360_SHADOW_BACKUP=${XIAOMI_HACK_DEVICE_HOME}/shadow.backup
+if [ "${FIRMWARE_VERSION}" == "CHUANGMI_VERSION=3.3.2_2016071217" -o "${FIRMWARE_VERSION}" == "CHUANGMI_VERSION=3.3.2_2016081814" ]; then
+   if [ -f "${XIAOMI_HACK_MIJIA360_SHADOW_BACKUP}" ]; then
+      diff /etc/shadow "${XIAOMI_HACK_MIJIA360_SHADOW_BACKUP}" > /dev/null
+      if [ $? -eq 1 ]; then
+         cp "${XIAOMI_HACK_MIJIA360_SHADOW_BACKUP}" /etc/shadow
+      fi
+   fi
 fi
 
-if [ -n "${MCH_TIMEZONE}" ]; then
-    echo "----- Configure timezone"
-    rm /etc/TZ
-    echo "${MCH_TIMEZONE}" > /etc/TZ
-    export TZ="${MCH_TIMEZONE}"
+# Replace Busybox, this modification is not persistent
+if [ -f ${XIAOMI_HACK_DEVICE_HOME}/bin/busybox ]; then
+  mount --bind ${XIAOMI_HACK_DEVICE_HOME}/bin/busybox /bin/busybox
 fi
 
-if [ -n "${MCH_ROOT_PASSWORD}" ]; then
+if [ -n "${XIAOMI_HACK_ROOT_PASSWORD}" ]; then
     echo "----- Setting root password"
-    (echo "${MCH_ROOT_PASSWORD}"; echo "${MCH_ROOT_PASSWORD}") | passwd
+    (echo "${XIAOMI_HACK_ROOT_PASSWORD}"; echo "${XIAOMI_HACK_ROOT_PASSWORD}") | passwd
 fi
 
-if [ -n "${MCH_WIFI_SSID}" ]; then
-    echo "----- Creating Wi-Fi config for setup"
-    echo "# Wifi config file, user & passwd
-    ssid=${MCH_WIFI_SSID}
-    psk=${MCH_WIFI_PASSWORD}" > "${MCH_TMP}/wifi.conf"
-    mount --bind ${MCH_TMP}/wifi.conf /etc/miio/wifi.conf
+# Manage Telnet server
+if [ "$XIAOMI_HACK_TELNET_SERVER" == "NO" ]; then
+   systemctl stop telnet.socket
 fi
 
-if [ "${MCH_ENABLE_TELNET}" = false ]; then
-    echo "----- Telnet enabled by default, stopping service"
-    systemctl stop telnet.socket
-fi
-
-if [ "${MCH_ENABLE_FTP}" = true ]; then
-    echo "----- Starting FTP server"
-    if [ -f ${MCH_HOME}/bin/tcpsvd ]; then
-        ${MCH_HOME}/bin/tcpsvd -vE 0.0.0.0 21 ftpd -w / &
-        sleep 1
-    else
-        echo "Error: FTP server start failed, ${MCH_HOME}/bin/tcpsvd not found"
+echo "----- Starting SSH server"
+if [ -f ${XIAOMI_HACK_DEVICE_HOME}/bin/dropbear ]; then
+    mkdir -p /etc/dropbear
+    ## Security Purpose: recover previous RSA keys from SDCARD
+    if [ -s "${XIAOMI_HACK_DEVICE_HOME}/etc/dropbear_ecdsa_host_key" ]; then 
+        echo "Recovering previous host keys"
+        cp "${XIAOMI_HACK_DEVICE_HOME}/etc/dropbear_ecdsa_host_key" /etc/dropbear
     fi
-fi
+    
+    echo "----- Launching SSH demon"
 
-if [ "${MCH_ENABLE_SSH}" = true ]; then
-    echo "----- Starting SSH server"
-    if [ -f ${MCH_HOME}/bin/dropbear ]; then
-        ## Security Purpose: recover previous RSA keys from SDCARD
-        if [ -s "${MCH_HOME}/etc/dropbear_ecdsa_host_key" ]; then 
-            echo "Recovering previous host keys"
-            cp "${MCH_HOME}/etc/dropbear_ecdsa_host_key" /etc/dropbear
-        fi
+    ${XIAOMI_HACK_DEVICE_HOME}/bin/dropbear -R -p 22
 
-        ${MCH_HOME}/bin/dropbear -R -p 22
+    ## Security Purpose: Save the keys in the SDCARD
+    while [ ! -s /etc/dropbear/dropbear_ecdsa_host_key ]
+    do
+        sleep 2
+    done
 
-        ## Security Purpose: Save the keys in the SDCARD
-        while [ ! -s /etc/dropbear/dropbear_ecdsa_host_key ]
-        do
-            sleep 2
-        done
+    echo "OK"
 
-        if [ ! -s "${MCH_HOME}/etc/dropbear_ecdsa_host_key" ] &&
-            [ -s /etc/dropbear/dropbear_ecdsa_host_key ]; then
-            echo "Saving host keys"
-            cp /etc/dropbear/dropbear_ecdsa_host_key "${MCH_HOME}//etc/"
-        fi
-    else
-        echo "Error: FTP server start failed, ${MCH_HOME}/bin/tcpsvd not found"
+    if [ ! -s "${XIAOMI_HACK_DEVICE_HOME}/etc/dropbear_ecdsa_host_key" ] &&
+        [ -s /etc/dropbear/dropbear_ecdsa_host_key ]; then
+        echo "Saving host keys"
+        cp /etc/dropbear/dropbear_ecdsa_host_key "${XIAOMI_HACK_DEVICE_HOME}/etc/"
     fi
+else
+    echo "Error: SSH server start failed, ${XIAOMI_HACK_DEVICE_HOME}/bin/dropbear not found"
 fi
 
-echo "----- Creating modified run script (to make stuff work)"
+# Manage FTP server
+if [ "$XIAOMI_HACK_FTP_SERVER" == "YES" ]; then
+   if mount | grep -q "busybox"; then
+   #if [ -f ${XIAOMI_HACK_DEVICE_HOME}/bin/busybox ]; then
+      echo "### Activating FTP server ..."
+      busybox tcpsvd -vE 0.0.0.0 21 ftpd -w / &
+      sleep 1
+      echo
+   elif [ -f ${XIAOMI_HACK_DEVICE_HOME}/bin/tcpsvd ]; then
+      echo "### Activating FTP server ..."
+      ${XIAOMI_HACK_DEVICE_HOME}/bin/tcpsvd -vE 0.0.0.0 21 ftpd -w / &
+      sleep 1
+      echo
+   else
+      echo "Error: Unable to activate FTP server"
+   fi
+fi
+
+if [ "$XIAOMI_HACK_DISABLE_IMIAPP" == "YES" ]; then
+  /sdcard/dis_bin.sh /usr/imi/imiApp
+  # We have to set WLAN MAC. TODO
+  DEVICE_CONFIG_FILE=/usr/imi/usrinfo/manufacture.conf
+  ###ls $DEVICE_CONFIG_FILE >/sdcard/xiaomi_hack/logs/setmac.txt 2>&1
+  ###if [ -e $DEVICE_CONFIG_FILE ]; then
+  ###  cat $DEVICE_CONFIG_FILE >>/sdcard/xiaomi_hack/logs/setmac.txt
+  ###fi
+  ###/usr/imi/util/setmac.sh >>/sdcard/xiaomi_hack/logs/setmac.txt
+fi
+
 # Startup sequence is:
 # /usr/local/bin/run.sh
 #    /usr/imi/start.sh
@@ -140,19 +142,8 @@ echo "----- Creating modified run script (to make stuff work)"
 # We mount the modified version in place of the official one, this modification is not persistent
 
 # Create xiaomi_hack_env.sh / miio_pre.sh / miio.sh / miio_post.sh sequence
-cat "${MCH_TMP}/env.sh" "${MCH_HOME}/scripts/miio_pre.sh" > "${MCH_TMP}/miio.sh"
-if [ "${MCH_ENABLE_CLOUD}" = true ]; then
-    export XIAOMI_HACK_DEVICE_NAME=${MCH_DEVICE_NAME}
-    export XIAOMI_HACK_DEVICE_HOME=${MCH_HOME}
-    export XIAOMI_LOGS=${MCH_LOGS}
-    cat /usr/imi/miio.sh >> "${MCH_TMP}/miio.sh"
-else
-    cat "${MCH_HOME}/scripts/miio_modified.sh" >> "${MCH_TMP}/miio.sh"
-fi
-cat "${MCH_HOME}/scripts/miio_post.sh" >> "${MCH_TMP}/miio.sh"
-
+cat "${XIAOMI_HACK_TMP}/xiaomi_hack_env.sh" "${XIAOMI_HACK_DEVICE_HOME}/scripts/miio_pre.sh" /usr/imi/miio.sh "${XIAOMI_HACK_DEVICE_HOME}/scripts/miio_post.sh" > "${XIAOMI_HACK_TMP}/miio.sh"
 # Make the modified version executable
-chmod +x ${MCH_TMP}/miio.sh
+chmod +x ${XIAOMI_HACK_TMP}/miio.sh
 # Mount the modified version in place of the official one, this modification is not persistent
-mount --bind ${MCH_TMP}/miio.sh /usr/imi/miio.sh
-echo
+mount --bind ${XIAOMI_HACK_TMP}/miio.sh /usr/imi/miio.sh
