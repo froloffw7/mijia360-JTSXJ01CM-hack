@@ -39,6 +39,7 @@ The firmware I'm currently using is version **3.3.10_2017121915** that I upgrade
 * RTSP server
   * Stream 1 (1080p): rtsp://{IP}/stream1
   * Stream 2 (360p): rtsp://{IP}/stream2
+  * Session length is limited to 60 seconds
 
 ## LED indicator on startup (Disabled Cloud mode)
 
