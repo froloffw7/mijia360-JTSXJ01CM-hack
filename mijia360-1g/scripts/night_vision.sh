@@ -1,14 +1,19 @@
 #!/bin/sh
 
-MCH_HOME="/sdcard/mijia360-1g"
+#MCH_HOME="/sdcard/mijia360-1g"
+# Absolute path to this script is: <path>/<filename>
+SCRIPT=$(readlink -f $0)
+# Absolute path this script is: <path>
+MCH_HOME=`dirname $SCRIPT`
+#echo $MCH_HOME
 
-if [ $# -eq 1 ] && [ "$1" = "on" ] || [ "$1" = "off" ] || [ "$1" = "auto" ]; then
+if [ $# -ge 1 ] && [ "$1" = "on" ] || [ "$1" = "off" ] || [ "$1" = "auto" ]; then
     if [ "$1" = "off" ]; then
-        sh -c '(sleep 3; printf "%s\n" h d 0; sleep 1; printf "%s\n" q q;) | /usr/local/bin/test_image -i 1'
-        sh "${MCH_HOME}/scripts/ircut.sh" off
+        sh "${MCH_HOME}/ircut.sh" off
+        sh -c '(sleep 3; printf "%s\n" h d 0; sleep 1; printf "%s\n" q q;) | /usr/local/bin/test_image -i 1' >/dev/null
     elif [ "$1" = "on" ]; then
-        sh -c '(sleep 3; printf "%s\n" h d 1; sleep 1; printf "%s\n" q q;) | /usr/local/bin/test_image -i 1'
-        sh "${MCH_HOME}/scripts/ircut.sh" on
+        sh -c '(sleep 3; printf "%s\n" h d 1; sleep 1; printf "%s\n" q q;) | /usr/local/bin/test_image -i 1' >/dev/null
+        sh "${MCH_HOME}/ircut.sh" on $2
     elif [ "$1" = "auto" ]; then
         NIGHT_MODE=off
         THRESHOLD=80
@@ -21,12 +26,12 @@ if [ $# -eq 1 ] && [ "$1" = "on" ] || [ "$1" = "off" ] || [ "$1" = "auto" ]; the
             fi
             OLD_VALUE=$ADC
             if [ "$ADC" -lt "$THRESHOLD" ] && [ "$NIGHT_MODE" = "off" ]; then
-                sh -c '(sleep 3; printf "%s\n" h d 1; usleep 500000; printf "%s\n" q q;) | /usr/local/bin/test_image -i 1'
-                sh "${MCH_HOME}/scripts/ircut.sh" on
+                sh -c '(sleep 3; printf "%s\n" h d 1; usleep 500000; printf "%s\n" q q;) | /usr/local/bin/test_image -i 1' >/dev/null
+                sh "${MCH_HOME}/ircut.sh" on
                 NIGHT_MODE=on
             elif [ "$ADC" -ge "$THRESHOLD" ] && [ "$NIGHT_MODE" = "on" ]; then
-                sh -c '(sleep 3; printf "%s\n" h d 0; usleep 500000; printf "%s\n" q q;) | /usr/local/bin/test_image -i 1'
-                sh "${MCH_HOME}/scripts/ircut.sh" off
+                sh -c '(sleep 3; printf "%s\n" h d 0; usleep 500000; printf "%s\n" q q;) | /usr/local/bin/test_image -i 1' >/dev/null
+                sh "${MCH_HOME}/ircut.sh" off
                 NIGHT_MODE=off
             fi
             echo "ADC = ${ADC}"
@@ -35,5 +40,5 @@ if [ $# -eq 1 ] && [ "$1" = "on" ] || [ "$1" = "off" ] || [ "$1" = "auto" ]; the
         done
     fi
 else
-    echo "Usage: night_vision.sh <off|on|auto>"
+    echo "Usage: day_night_switch.sh <off|on|auto>"
 fi
