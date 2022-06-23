@@ -1,4 +1,4 @@
-# Mijia 360 1080p (JTSXJ01CM) camera hack
+# Mijia 360 1080p (JTSXJ01CM) Camera Hack
 
 This is an indirect fork of [niclet/xiaomi_hack](https://github.com/niclet/xiaomi_hack) (big thanks!) for the first-gen Mijia 360 1080p IP camera (JTSXJ01CM), with additional features, some probably inspired from different Mi/Yi camera hacks, just to get this to work properly:
 
@@ -15,11 +15,11 @@ TODO:
 
 ## Recommended firmware
 
-The firmware I'm currently using is version **3.3.10_2017121915** that I upgraded OTA via Mi Home years ago, and I haven't upgraded to anything beyond that, so I can only recommend firmwares less than or equal to that. You might be able to downgrade your firmware (if you have a Windows machine) by going to a particular Russian site and getting an older firmware and the flashing tool, but I haven't tested that yet.
+The firmware I'm currently using has version **3.3.2_2016123014**,  JMacalinao uses **3.3.10_2017121915** which he has got with OTA upgrade via Mi Home years ago. I can only recommend firmwares less than or equal to that. You might be able to downgrade your firmware (if you have a Windows machine) by  getting an older firmware and the flashing tool.This haven't been tested.
 
 ## Installation
 
-0. Set up the camera with the Mi Home app. Make sure the WiFi credentials are correct. (Thanks to @Peter71131, [#3](https://github.com/JMacalinao/mijia360-1g-hack/issues/3#issuecomment-734204079))
+0. Set up the camera with the Mi Home app. Make sure the WiFi credentials are correct. (Thanks to @Peter71131, [#3](https://github.com/JMacalinao/mijia360-1g-hack/issues/3#issuecomment-734204079)).
 1. Copy all files to your SD card.
 2. Edit config.ini.
 3. Insert SD card to the camera.
